@@ -29,31 +29,23 @@ class AdversarialPredictionClassifier(object):
             self.m_adv = adv_estimator
         
         y_pred = self.base_estimator.predict(X_pred)[0]
-        
         X_obs = self.X.loc[self.y == y_pred]
-        
         n_adv_sample = len(X_obs.iloc[:,0])
-        
         X_cand = pd.DataFrame()
         for i in xrange(self._n_features):
             X_cand[self._columns[i]] = [rd.gauss(X_pred[0][i], 
                    self._X_std[i]) for j in xrange(n_adv_sample)]
         
         self.X_cand = X_cand
-        
         X_adv = X_obs.append(X_cand)
-        
         y_adv = [0 for i in xrange(n_adv_sample)]
-
         for i in xrange(n_adv_sample):
             y_adv.append(1)
             
-        
         conf = min(1,(1-np.mean(cross_val_score(self.m_adv, X_adv, y_adv, cv = 10,
                                                 scoring = "accuracy")))/0.5)
         
         self.m_adv.fit(X_adv,y_adv)
-        
         pred_prb = self.base_estimator.predict_proba(X_pred)
         pred = [list(pred_prb[0]), conf]
 
